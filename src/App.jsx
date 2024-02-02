@@ -4,8 +4,8 @@ import Peer from "simple-peer"
 import io from "socket.io-client"
 import "./app.scss"
 
-const socket = io.connect("wss://simple-peer-video-chat-app.onrender.com");
-// const socket = io.connect("http://localhost:5000");
+// const socket = io.connect("https://simple-peer-video-chat-app.onrender.com");
+const socket = io.connect("http://localhost:5000");
 
 function App() {
   console.log("App is running!");
@@ -47,7 +47,8 @@ function App() {
     });
   }, []);
 
-  const createPeer = () => {
+  const callUser = (id) => {
+    setIdToCall(id);
     const peer = new Peer({
       initiator: true,
       trickle: false,
@@ -97,11 +98,6 @@ function App() {
     });
 
     peerRef.current = peer; // Update the ref with the current peer
-  };
-
-  const callUser = (id) => {
-    setIdToCall(id);
-    createPeer();
   };
 
   const answerCall = () => {
