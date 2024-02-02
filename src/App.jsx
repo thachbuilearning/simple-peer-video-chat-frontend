@@ -28,9 +28,12 @@ function App() {
     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       .then((stream) => {
         setStream(stream);
-        if (myVideo.current) {
-          myVideo.current.srcObject = stream;
-        }
+        // Delay rendering by a short interval
+        setTimeout(() => {
+          if (myVideo.current) {
+            myVideo.current.srcObject = stream;
+          }
+        }, 500); // Adjust the delay as needed
       })
       .catch((error) => {
         console.error('Error accessing camera and microphone:', error);
@@ -70,9 +73,9 @@ function App() {
       });
     });
 
-    peer.on("stream", (stream) => {
+    peer.on("stream", (userStream) => {
       if (userVideo.current) {
-        userVideo.current.srcObject = stream;
+        userVideo.current.srcObject = userStream;
       }
     });
     peer.on('error', err => console.log('error', err));
