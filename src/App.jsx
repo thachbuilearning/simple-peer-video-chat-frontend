@@ -4,7 +4,7 @@ import Peer from "simple-peer"
 import io from "socket.io-client"
 import "./app.scss"
 
-const socket = io.connect("https://simple-peer-video-chat-app.onrender.com");
+const socket = io.connect("wss://simple-peer-video-chat-app.onrender.com");
 // const socket = io.connect("http://localhost:5000");
 
 function App() {
