@@ -7,21 +7,22 @@ import "./app.scss"
 const socket = io.connect("https://simple-peer-video-chat-app.onrender.com");
 // const socket = io.connect("http://localhost:5000");
 
+
 function App() {
   console.log("App is running!");
-  const [me, setMe] = useState("");
-  const [stream, setStream] = useState();
-  const [receivingCall, setReceivingCall] = useState(false);
-  const [caller, setCaller] = useState("");
-  const [callerSignal, setCallerSignal] = useState();
-  const [callAccepted, setCallAccepted] = useState(false);
-  const [idToCall, setIdToCall] = useState("");
-  const [callEnded, setCallEnded] = useState(false);
-  const [callerName, setCallerName] = useState("");
-  const [name, setName] = useState("");
-  const myVideo = useRef();
-  const userVideo = useRef();
-  const peerRef = useRef(); // Maintain a ref for the current peer
+  const [me, setMe] = useState("")
+  const [stream, setStream] = useState()
+  const [receivingCall, setReceivingCall] = useState(false)
+  const [caller, setCaller] = useState("")
+  const [callerSignal, setCallerSignal] = useState()
+  const [callAccepted, setCallAccepted] = useState(false)
+  const [idToCall, setIdToCall] = useState("")
+  const [callEnded, setCallEnded] = useState(false)
+  const [callerName, setCallerName] = useState("")
+  const [name, setName] = useState("")
+  const myVideo = useRef()
+  const userVideo = useRef()
+
 
   useEffect(() => {
     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
@@ -32,23 +33,28 @@ function App() {
         }
       })
       .catch((error) => {
-        console.error("Error accessing camera and microphone:", error);
+        console.error('Error accessing camera and microphone:', error);
       });
 
-    socket.on("me", (id) => {
-      setMe(id);
-    });
 
+    socket.on("me", (id) => {
+      setMe(id)
+    });
     socket.on("callUser", (data) => {
       setReceivingCall(true);
       setCaller(data.from);
       setName(data.name);
-      setCallerSignal(data.signal);
+      setCallerSignal(data.signal)
     });
   }, []);
 
   const callUser = (id) => {
-    setIdToCall(id);
+    console.log("id to call:", id)
+    if (!stream) {
+      console.error("No stream available.");
+      return;
+    }
+
     const peer = new Peer({
       initiator: true,
       trickle: false,
@@ -57,29 +63,32 @@ function App() {
 
     peer.on("signal", (data) => {
       socket.emit("callUser", {
-        userToCall: idToCall,
+        userToCall: id,
         signalData: data,
         from: me,
         name: callerName,
       });
     });
 
-    peer.on("stream", (userStream) => {
+    peer.on("stream", (stream) => {
       if (userVideo.current) {
-        userVideo.current.srcObject = userStream;
+        userVideo.current.srcObject = stream;
       }
     });
-
-    peer.on("error", (err) => console.log("error", err));
+    peer.on('error', err => console.log('error', err));
 
     socket.on("callAccepted", (signal) => {
+
       setCallAccepted(true);
       peer.signal(signal);
+
     });
 
+
     socket.on("callEnded", () => {
-      if (peerRef.current) {
-        peerRef.current.destroy();
+      // Destroy the Peer created in this call
+      if (peer) {
+        peer.destroy();
         console.log("Peer in callUser destroyed.");
       } else {
         console.log("No peer found in callUser.");
@@ -96,12 +105,13 @@ function App() {
         userVideo.current.srcObject = null;
       }
     });
-
-    peerRef.current = peer; // Update the ref with the current peer
   };
+
 
   const answerCall = () => {
     setCallAccepted(true);
+
+    console.log("Caller signal:", callerSignal);
 
     const peer = new Peer({
       initiator: false,
@@ -110,20 +120,20 @@ function App() {
     });
 
     peer.on("signal", (data) => {
-      socket.emit("answerCall", { signal: data, to: caller });
+      socket.emit("answerCall", { signal: data, to: caller })
     });
 
-    peer.on("stream", (userStream) => {
-      userVideo.current.srcObject = userStream;
+    peer.on("stream", (stream) => {
+      userVideo.current.srcObject = stream
     });
-
-    peer.on("error", (err) => console.log("error", err));
+    peer.on('error', err => console.log('error', err));
 
     peer.signal(callerSignal);
 
     socket.on("callEnded", () => {
-      if (peerRef.current) {
-        peerRef.current.destroy();
+      // Destroy the Peer created in this call
+      if (peer) {
+        peer.destroy();
         console.log("Peer in callUser destroyed.");
       } else {
         console.log("No peer found in callUser.");
@@ -140,8 +150,6 @@ function App() {
         userVideo.current.srcObject = null;
       }
     });
-
-    peerRef.current = peer; // Update the ref with the current peer
   };
 
   const leaveCall = () => {
@@ -171,16 +179,6 @@ function App() {
     // Reset the userVideo's srcObject
     if (userVideo.current) {
       userVideo.current.srcObject = null;
-    }
-
-    // Destroy the peer connection
-    if (peerRef.current) {
-      // Remove stream before destroying the peer connection
-      peerRef.current.removeStream(stream);
-      peerRef.current.destroy();
-      console.log("Peer in callUser destroyed.");
-    } else {
-      console.log("No peer found in callUser.");
     }
   };
 
